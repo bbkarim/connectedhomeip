@@ -5,6 +5,20 @@ ARG TARGETPLATFORM
 # COMMITHASH defines the target commit to build from. May be passed in using --build-arg.
 ARG COMMITHASH=c1ec2d777456924dcaa59b53351b00d73caf378f
 
+ARG EXTRA_CA_CERTS
+RUN if [ -n "${EXTRA_CA_CERTS:-}" ] && [ -f "$EXTRA_CA_CERTS" ]; then \
+      apt-get update \
+      && apt-get install -y --no-install-recommends \
+           ca-certificates curl openssl \
+      && rm -rf /var/lib/apt/lists/* \
+      && mkdir -p /usr/local/share/ca-certificates/ \
+      && cp "$EXTRA_CA_CERTS" /usr/local/share/ca-certificates/extra-ca.crt \
+      && update-ca-certificates; \
+    fi
+ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_FILE=${PIP_CERT}
+ENV REQUESTS_CA_BUNDLE=${PIP_CERT}
+
 # Ensure TARGETPLATFORM is set
 RUN case ${TARGETPLATFORM} in \
     "linux/amd64") \
