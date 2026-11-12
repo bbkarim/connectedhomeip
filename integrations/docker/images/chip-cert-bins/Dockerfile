@@ -4,6 +4,10 @@ FROM ${UBUNTU_BASE_IMAGE} AS chip-build-cert
 LABEL org.opencontainers.image.source=https://github.com/project-chip/connectedhomeip
 
 ARG TARGETPLATFORM
+# CHIP_GIT_REPO defines the target repo to build from. May be passed in using --build-arg.
+ARG CHIP_GIT_REPO=https://github.com/project-chip/connectedhomeip.git
+# CHIP_GIT_BRANCH defines the target branch to build from. May be passed in using --build-arg.
+ARG CHIP_GIT_BRANCH=v1.6-branch
 # COMMITHASH defines the target commit to build from. May be passed in using --build-arg.
 ARG COMMITHASH=c1ec2d777456924dcaa59b53351b00d73caf378f
 
@@ -142,10 +146,16 @@ RUN set -x \
     && : # last line
 
 # Stage 1.5: Bootstrap Matter.
-RUN echo "Cloning at commit: ${COMMITHASH}" \
-    && git clone https://github.com/project-chip/connectedhomeip.git /root/connectedhomeip \
+RUN if [ -n "${CHIP_GIT_BRANCH}" ]; then \
+    echo "Cloning branch: ${CHIP_GIT_BRANCH}" \
+    && git clone -b ${CHIP_GIT_BRANCH} --depth=1 ${CHIP_GIT_REPO} /root/connectedhomeip \
+    && cd /root/connectedhomeip; \
+  else \
+    echo "Cloning at commit: ${COMMITHASH}" \
+    && git clone ${CHIP_GIT_REPO} /root/connectedhomeip \
     && cd /root/connectedhomeip \
-    && git checkout ${COMMITHASH}
+    && git checkout ${COMMITHASH}; \
+  fi
 
 WORKDIR /root/connectedhomeip/
 RUN ./scripts/checkout_submodules.py --allow-changing-global-git-config --shallow --platform linux
