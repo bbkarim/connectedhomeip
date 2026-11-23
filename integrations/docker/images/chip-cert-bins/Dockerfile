@@ -1,6 +1,8 @@
 # Stage 1: Setup dependencies (based on chip-build).
-FROM ubuntu:24.04 AS chip-build-cert
+ARG UBUNTU_BASE_IMAGE=ubuntu:24.04
+FROM ${UBUNTU_BASE_IMAGE} AS chip-build-cert
 LABEL org.opencontainers.image.source=https://github.com/project-chip/connectedhomeip
+
 ARG TARGETPLATFORM
 # COMMITHASH defines the target commit to build from. May be passed in using --build-arg.
 ARG COMMITHASH=c1ec2d777456924dcaa59b53351b00d73caf378f
@@ -239,7 +241,7 @@ RUN case ${TARGETPLATFORM} in \
     esac
 
 # Stage 3: Copy relevant cert bins to a minimal image to reduce size.
-FROM ubuntu:24.04
+FROM ${UBUNTU_BASE_IMAGE}
 ENV TZ=Etc/UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
